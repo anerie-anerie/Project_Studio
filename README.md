@@ -1,32 +1,30 @@
-# React + TypeScript + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+# Exercise Tracker — ECE 198
 
-Currently, two official plugins are available:
+A webcam-based exercise tracker built with React, TypeScript, and MediaPipe. The current prototype supports Front Raises, with live arm tracking, form feedback, and automatic repetition counting.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## How to Run
 
-## React Compiler
+1. Install Node.js (includes npm).
+2. Open a terminal in the project folder.
+3. Run:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+4. Open the local URL displayed in the terminal (usually http://localhost:5173).
+5. Allow camera access when prompted.
+
+## How to Use
+
+1. Stand approximately 30–45° to the camera, with both arms and hips visible.
+2. Start with both arms down by your sides.
+3. Raise both arms forward to shoulder height, then lower them together.
+4. The app tracks your left and right arms, provides form feedback, and automatically counts completed repetitions.
+5. Click **Reset Counter** to start again.
+
+## Notes
+
+This is a work-in-progress prototype. Some repetitions may be missed depending on camera positioning, visibility, and movement speed.
