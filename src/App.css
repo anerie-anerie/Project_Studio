@@ -1,0 +1,743 @@
+
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+/* ==========================================
+   GLOBAL STYLING
+   ========================================== */
+
+:root {
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  color: #22232d;
+  background: #f5f5f7;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f5f5f7;
+}
+
+button {
+  font-family: inherit;
+}
+
+#root {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/* ==========================================
+   FULL SCREEN
+   ========================================== */
+
+.je-page {
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 22px 30px;
+}
+
+.je-shell {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-height: calc(100vh - 44px);
+  min-height: calc(100svh - 44px);
+
+  margin: 0 auto;
+}
+
+/* ==========================================
+   HEADER
+   ========================================== */
+
+.je-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 8px 2px 18px;
+}
+
+.je-brand {
+  color: #22232d;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.je-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 10px 15px;
+
+  background: #ffffff;
+  border: 1px solid #e6e6e9;
+  border-radius: 12px;
+
+  color: #666773;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.je-status-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+
+  background: #a0a0a8;
+  border-radius: 50%;
+}
+
+.je-status-dot.active {
+  background: #158a64;
+}
+
+/* ==========================================
+   CENTERED EXERCISE TITLE
+   ========================================== */
+
+.je-title {
+  padding: 16px 0 28px;
+  text-align: center;
+}
+
+.je-title h1 {
+  margin: 0;
+
+  color: #22232d;
+  font-size: clamp(34px, 3.2vw, 47px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1.25;
+}
+
+.je-title strong {
+  font-weight: 800;
+}
+
+/* ==========================================
+   MAIN WORKSPACE
+   ========================================== */
+
+.je-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: stretch;
+
+  flex: 1;
+  min-height: 470px;
+}
+
+/* ==========================================
+   LEFT SIDE - CAMERA
+   ========================================== */
+
+.je-camera-section {
+  display: flex;
+  min-width: 0;
+}
+
+.je-camera {
+  position: relative;
+
+  flex: 1;
+  min-height: 440px;
+  overflow: hidden;
+
+  background: #1b1e25;
+  border-radius: 21px;
+}
+
+/* Camera video remains invisible */
+.je-video {
+  position: absolute;
+  inset: 0;
+
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  opacity: 0;
+}
+
+/* Canvas displays the MediaPipe skeleton */
+.je-canvas {
+  position: absolute;
+  inset: 0;
+
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+}
+
+/* ==========================================
+   RIGHT SIDE - LAYOUT
+   ========================================== */
+
+.je-info {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  min-width: 0;
+}
+
+/* Instructions and detection share one white card */
+.je-instructions-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+
+  flex: 1;
+  min-width: 0;
+
+  padding: 30px 34px;
+
+  background: #ffffff;
+  border: 1px solid #e7e7ea;
+  border-radius: 21px;
+}
+
+/* ==========================================
+   INSTRUCTIONS
+   ========================================== */
+
+.je-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.je-instructions li {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+
+  color: #272832;
+  font-size: clamp(21px, 1.7vw, 26px);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.je-step {
+  flex-shrink: 0;
+  min-width: 28px;
+
+  color: #158a64;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.8;
+}
+
+/* ==========================================
+   LIVE ARM DETECTION
+   ========================================== */
+
+.je-arm-tracking {
+  padding-top: 22px;
+  border-top: 1px solid #ececef;
+}
+
+.je-arm-tracking h2 {
+  margin: 0 0 18px;
+
+  color: #22232d;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+.je-arm-tracking-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+/* Each arm displays its own tracking state */
+.je-arm-line {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+
+  min-width: 0;
+}
+
+.je-arm-name {
+  color: #282a33;
+  font-size: 18px;
+  font-weight: 750;
+}
+
+.je-arm-state {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: #858590;
+  font-size: 16px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.je-arm-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+
+  background: #a4a4ab;
+  border-radius: 50%;
+}
+
+/* Green only when the arm is detected */
+.je-arm-state.detected {
+  color: #158a64;
+}
+
+.je-arm-state.detected .je-arm-dot {
+  background: #158a64;
+}
+
+/* ==========================================
+   COMPLETED REP COUNTER
+   ========================================== */
+
+.je-rep-area {
+  padding: 22px 28px;
+
+  background: #ffffff;
+  border: 1.5px solid #bfe4d4;
+  border-radius: 19px;
+}
+
+.je-rep-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Keep label and number together */
+.je-rep-details > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 23px;
+
+  min-width: 0;
+}
+
+.je-rep-number {
+  order: -1;
+  margin: 0;
+
+  color: #22232d;
+  font-size: clamp(68px, 5.5vw, 90px);
+  font-weight: 800;
+  letter-spacing: -3px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.je-rep-label {
+  margin: 0;
+  max-width: 155px;
+
+  color: #292a33;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.je-reset {
+  flex-shrink: 0;
+  padding: 11px 14px;
+
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  color: #158a64;
+  font-size: 16px;
+  font-weight: 800;
+
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.je-reset:hover {
+  background: #eaf6f0;
+}
+
+.je-reset:focus-visible {
+  outline: 3px solid #80c9aa;
+  outline-offset: 3px;
+}
+
+/* ==========================================
+   LARGE FORM FEEDBACK
+   ========================================== */
+
+.je-feedback {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+
+  margin-top: 20px;
+  padding: 27px 32px;
+  min-height: 108px;
+
+  background: #ffffff;
+  border: 1px solid #e5e5e8;
+  border-radius: 19px;
+}
+
+.je-feedback h2 {
+  flex-shrink: 0;
+  min-width: 190px;
+  margin: 0;
+
+  color: #22232d;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.je-feedback-content {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+
+  flex: 1;
+  min-width: 0;
+}
+
+.je-feedback-dot {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+
+  /* Amber when positioning/form needs attention */
+  background: #d5a04a;
+  border-radius: 50%;
+}
+
+/* Green when both arms are tracking correctly */
+.je-feedback.is-good {
+  border-color: #bfe4d4;
+}
+
+.je-feedback.is-good .je-feedback-dot {
+  background: #158a64;
+}
+
+.je-feedback-content p {
+  margin: 0;
+
+  color: #22232d;
+  font-size: clamp(22px, 2vw, 28px);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* ==========================================
+   ADVANCED MEASUREMENTS
+   ========================================== */
+
+.je-diagnostics {
+  margin-top: 16px;
+  padding: 0 4px;
+}
+
+.je-diagnostics summary {
+  color: #777883;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.je-diagnostics summary:hover {
+  color: #158a64;
+}
+
+.je-measurements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
+
+  padding: 20px 0;
+}
+
+.je-measurements p {
+  margin: 0;
+
+  color: #777883;
+  font-size: 15px;
+}
+
+.je-measurements strong {
+  margin-left: 8px;
+  color: #22232d;
+}
+
+/* ==========================================
+   TABLET AND NARROW WINDOWS
+   ========================================== */
+
+@media (max-width: 950px) {
+  .je-page {
+    padding: 18px;
+  }
+
+  .je-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .je-camera {
+    min-height: 400px;
+  }
+
+  .je-instructions-panel {
+    padding: 28px;
+  }
+
+  .je-instructions li {
+    font-size: 22px;
+  }
+}
+
+/* ==========================================
+   PHONES
+   ========================================== */
+
+@media (max-width: 600px) {
+  .je-page {
+    padding: 12px;
+  }
+
+  .je-header {
+    padding-bottom: 13px;
+  }
+
+  .je-brand {
+    font-size: 21px;
+  }
+
+  .je-status {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .je-title {
+    padding: 18px 0 24px;
+  }
+
+  .je-title h1 {
+    font-size: 29px;
+    letter-spacing: -1px;
+  }
+
+  .je-workspace {
+    gap: 15px;
+    min-height: 0;
+  }
+
+  .je-camera {
+    min-height: 300px;
+  }
+
+  .je-info {
+    gap: 15px;
+  }
+
+  .je-instructions-panel {
+    gap: 25px;
+    padding: 25px 22px;
+  }
+
+  .je-instructions {
+    gap: 21px;
+  }
+
+  .je-instructions li {
+    gap: 13px;
+    font-size: 19px;
+  }
+
+  .je-step {
+    font-size: 17px;
+  }
+
+  .je-arm-tracking {
+    padding-top: 20px;
+  }
+
+  .je-arm-tracking h2 {
+    font-size: 18px;
+  }
+
+  .je-arm-tracking-list {
+    gap: 12px;
+  }
+
+  .je-arm-name {
+    font-size: 16px;
+  }
+
+  .je-arm-state {
+    font-size: 14px;
+  }
+
+  .je-rep-area {
+    padding: 20px;
+  }
+
+  .je-rep-details {
+    gap: 10px;
+  }
+
+  .je-rep-details > div:first-child {
+    gap: 14px;
+  }
+
+  .je-rep-number {
+    font-size: 68px;
+  }
+
+  .je-rep-label {
+    font-size: 16px;
+  }
+
+  .je-reset {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .je-feedback {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+
+    padding: 24px;
+  }
+
+  .je-feedback h2 {
+    min-width: 0;
+    font-size: 23px;
+  }
+
+  .je-feedback-content p {
+    font-size: 22px;
+  }
+
+  .je-measurements {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================
+   SHORT DESKTOP SCREENS
+   ========================================== */
+
+@media (max-height: 760px) and (min-width: 951px) {
+  .je-page {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .je-shell {
+    min-height: calc(100vh - 24px);
+    min-height: calc(100svh - 24px);
+  }
+
+  .je-header {
+    padding-bottom: 12px;
+  }
+
+  .je-title {
+    padding: 10px 0 18px;
+  }
+
+  .je-workspace {
+    min-height: 390px;
+  }
+
+  .je-camera {
+    min-height: 390px;
+  }
+
+  .je-instructions-panel {
+    gap: 16px;
+    padding: 19px 26px;
+  }
+
+  .je-instructions {
+    gap: 13px;
+  }
+
+  .je-instructions li {
+    font-size: 19px;
+    line-height: 1.4;
+  }
+
+  .je-arm-tracking {
+    padding-top: 13px;
+  }
+
+  .je-arm-tracking h2 {
+    margin-bottom: 10px;
+    font-size: 17px;
+  }
+
+  .je-arm-name {
+    font-size: 15px;
+  }
+
+  .je-arm-state {
+    font-size: 14px;
+  }
+
+  .je-rep-area {
+    padding: 14px 24px;
+  }
+
+  .je-rep-number {
+    font-size: 66px;
+  }
+
+  .je-feedback {
+    margin-top: 14px;
+    min-height: 84px;
+    padding: 15px 24px;
+  }
+
+  .je-feedback h2 {
+    font-size: 22px;
+  }
+
+  .je-feedback-content p {
+    font-size: 22px;
+  }
+}
