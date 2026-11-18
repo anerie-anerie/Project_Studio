@@ -15,6 +15,9 @@ import {
   areLandmarksVisible,
   isForwardRaiseValid,
 } from "./lib/exerciseGeometry";
+import { LiveRepBoard } from "./components/LiveRepBoard";
+
+const API_BASE_URL = "http://localhost:5001";
 
 // ==========================================
 // MAIN APPLICATION
@@ -26,7 +29,7 @@ export default function App() {
 
   const [status, setStatus] = useState("Initializing...");
 
-  // Arduino state (Properly inside component body now!)
+  // Arduino state
   const [acceleration, setAcceleration] = useState<number>(0);
   const [connected, setConnected] = useState(false);
   const [arduinoStatus, setArduinoStatus] = useState("Connect Arduino");
@@ -41,18 +44,157 @@ export default function App() {
     );
   }
 
-  // Raw measurements for each arm.
+  // Raw measurements for each arm
   const [leftShoulderAngle, setLeftShoulderAngle] = useState<number | null>(null);
   const [rightShoulderAngle, setRightShoulderAngle] = useState<number | null>(null);
   const [leftForwardScore, setLeftForwardScore] = useState<number | null>(null);
   const [rightForwardScore, setRightForwardScore] = useState<number | null>(null);
 
-  // User-facing feedback.
-  const [exerciseFeedback, setExerciseFeedback] = useState("Position yourself in front of the camera.");
+  // User-facing feedback & rep tracking
+  const [exerciseFeedback, setExerciseFeedback] = useState(
+    "Position yourself in front of the camera."
+  );
   const [reps, setReps] = useState(0);
 
-  // Preserves the DOWN / UP / WAITING state between React renders.
+  // Patient name & session lifecycle state
+  const [nameInput, setNameInput] = useState("");
+  const [patientName, setPatientName] = useState("Anonymous Patient");
+  const [nameSubmitted, setNameSubmitted] = useState(false);
+  const [sessionActive, setSessionActive] = useState(false);
+  const [sessionMessage, setSessionMessage] = useState(
+    "Type a patient name and press Submit Name, then Start Session."
+  );
+
   const counterRef = useRef(new FrontRaiseCounter());
+  const sessionIdRef = useRef<string | null>(null);
+  const patientNameRef = useRef(patientName);
+  const sessionActiveRef = useRef(sessionActive);
+  const repsRef = useRef(reps);
+
+  useEffect(() => {
+    patientNameRef.current = patientName;
+  }, [patientName]);
+
+  useEffect(() => {
+    sessionActiveRef.current = sessionActive;
+  }, [sessionActive]);
+
+  useEffect(() => {
+    repsRef.current = reps;
+  }, [reps]);
+
+  async function syncSessionToMongoDB(params: {
+    sessionId: string;
+    name: string;
+    nextReps: number;
+    status: "active" | "completed";
+    endedAt?: string | null;
+  }) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reps`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: params.sessionId,
+          patientName: params.name,
+          userName: params.name,
+          exercise: "front_raises",
+          reps: params.nextReps,
+          status: params.status,
+          endedAt: params.endedAt ?? null,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Failed to sync session:", await res.text());
+      }
+    } catch (err) {
+      console.error("Error syncing session to MongoDB:", err);
+    }
+  }
+
+  function handleNameSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = nameInput.trim();
+    const finalName = trimmed || "Anonymous Patient";
+    setPatientName(finalName);
+    patientNameRef.current = finalName;
+    setNameSubmitted(true);
+    setSessionMessage(`Patient name set to "${finalName}". Click Start Session to begin.`);
+  }
+
+  function handleStartSession() {
+    const activeName =
+      nameInput.trim() || patientNameRef.current || "Anonymous Patient";
+    setPatientName(activeName);
+    patientNameRef.current = activeName;
+    setNameSubmitted(true);
+
+    const newSessionId = crypto.randomUUID();
+    sessionIdRef.current = newSessionId;
+    counterRef.current.reset();
+    setReps(0);
+    repsRef.current = 0;
+    setSessionActive(true);
+    sessionActiveRef.current = true;
+    setSessionMessage(`Session started for ${activeName}.`);
+
+    void syncSessionToMongoDB({
+      sessionId: newSessionId,
+      name: activeName,
+      nextReps: 0,
+      status: "active",
+    });
+  }
+
+  function handleEndSession() {
+    if (!sessionIdRef.current) return;
+
+    setSessionActive(false);
+    sessionActiveRef.current = false;
+    setSessionMessage(
+      `Session ended for ${patientNameRef.current} (${repsRef.current} reps recorded).`
+    );
+
+    void syncSessionToMongoDB({
+      sessionId: sessionIdRef.current,
+      name: patientNameRef.current,
+      nextReps: repsRef.current,
+      status: "completed",
+      endedAt: new Date().toISOString(),
+    });
+  }
+
+  function setAndSyncReps(nextReps: number) {
+    const safeReps = Math.max(0, nextReps);
+    setReps(safeReps);
+    repsRef.current = safeReps;
+
+    if (sessionIdRef.current) {
+      void syncSessionToMongoDB({
+        sessionId: sessionIdRef.current,
+        name: patientNameRef.current,
+        nextReps: safeReps,
+        status: sessionActiveRef.current ? "active" : "completed",
+      });
+    }
+  }
+
+  function incrementReps() {
+    if (!sessionActiveRef.current || !sessionIdRef.current) return;
+
+    setReps((previousReps) => {
+      const nextReps = previousReps + 1;
+      repsRef.current = nextReps;
+      void syncSessionToMongoDB({
+        sessionId: sessionIdRef.current!,
+        name: patientNameRef.current,
+        nextReps,
+        status: "active",
+      });
+      return nextReps;
+    });
+  }
 
   // ==========================================
   // MEDIAPIPE + WEBCAM
@@ -98,7 +240,7 @@ export default function App() {
         });
 
         if (stopped) {
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach((track) => track.stop());
           return;
         }
 
@@ -174,12 +316,20 @@ export default function App() {
 
                 const measuredLeftForwardScore =
                   leftArmVisible && torsoForwardDirection
-                    ? calculateArmForwardScore(worldPose[11], worldPose[13], torsoForwardDirection)
+                    ? calculateArmForwardScore(
+                        worldPose[11],
+                        worldPose[13],
+                        torsoForwardDirection
+                      )
                     : null;
 
                 const measuredRightForwardScore =
                   rightArmVisible && torsoForwardDirection
-                    ? calculateArmForwardScore(worldPose[12], worldPose[14], torsoForwardDirection)
+                    ? calculateArmForwardScore(
+                        worldPose[12],
+                        worldPose[14],
+                        torsoForwardDirection
+                      )
                     : null;
 
                 setLeftShoulderAngle(measuredLeftAngle);
@@ -187,16 +337,30 @@ export default function App() {
                 setLeftForwardScore(measuredLeftForwardScore);
                 setRightForwardScore(measuredRightForwardScore);
 
-                const leftMovementValid = isForwardRaiseValid(measuredLeftAngle, measuredLeftForwardScore);
-                const rightMovementValid = isForwardRaiseValid(measuredRightAngle, measuredRightForwardScore);
+                const leftMovementValid = isForwardRaiseValid(
+                  measuredLeftAngle,
+                  measuredLeftForwardScore
+                );
+                const rightMovementValid = isForwardRaiseValid(
+                  measuredRightAngle,
+                  measuredRightForwardScore
+                );
 
-                const validatedLeftAngle = leftMovementValid ? measuredLeftAngle : null;
-                const validatedRightAngle = rightMovementValid ? measuredRightAngle : null;
+                const validatedLeftAngle = leftMovementValid
+                  ? measuredLeftAngle
+                  : null;
+                const validatedRightAngle = rightMovementValid
+                  ? measuredRightAngle
+                  : null;
 
                 const leftWrongDirection =
-                  measuredLeftAngle !== null && measuredLeftAngle > 45 && !leftMovementValid;
+                  measuredLeftAngle !== null &&
+                  measuredLeftAngle > 45 &&
+                  !leftMovementValid;
                 const rightWrongDirection =
-                  measuredRightAngle !== null && measuredRightAngle > 45 && !rightMovementValid;
+                  measuredRightAngle !== null &&
+                  measuredRightAngle > 45 &&
+                  !rightMovementValid;
 
                 if (leftWrongDirection || rightWrongDirection) {
                   setExerciseFeedback("Raise both arms forward, not sideways.");
@@ -212,8 +376,8 @@ export default function App() {
                   currentTime
                 );
 
-                if (repetitionCompleted) {
-                  setReps(previousReps => previousReps + 1);
+                if (repetitionCompleted && sessionActiveRef.current) {
+                  incrementReps();
                 }
               } else {
                 setLeftShoulderAngle(null);
@@ -247,7 +411,7 @@ export default function App() {
     return () => {
       stopped = true;
       cancelAnimationFrame(frameId);
-      cameraStream?.getTracks().forEach(track => track.stop());
+      cameraStream?.getTracks().forEach((track) => track.stop());
       detector?.close();
     };
   }, []);
@@ -264,7 +428,9 @@ export default function App() {
           <div className="je-status">
             <span
               className={
-                status === "Tracking active!" ? "je-status-dot active" : "je-status-dot"
+                status === "Tracking active!"
+                  ? "je-status-dot active"
+                  : "je-status-dot"
               }
             />
             {status === "Tracking active!" ? "Camera active" : status}
@@ -280,8 +446,19 @@ export default function App() {
         <div className="je-workspace">
           <section className="je-camera-section">
             <div className="je-camera">
-              <video ref={videoRef} autoPlay muted playsInline className="je-video" />
-              <canvas ref={canvasRef} className="je-canvas" role="img" aria-label="Live skeleton tracking" />
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                playsInline
+                className="je-video"
+              />
+              <canvas
+                ref={canvasRef}
+                className="je-canvas"
+                role="img"
+                aria-label="Live skeleton tracking"
+              />
             </div>
           </section>
 
@@ -290,7 +467,10 @@ export default function App() {
               <ol className="je-instructions">
                 <li>
                   <span className="je-step">01</span>
-                  <span>Stand approximately 30–45° to the camera, with both arms and hips visible.</span>
+                  <span>
+                    Stand approximately 30–45° to the camera, with both arms and
+                    hips visible.
+                  </span>
                 </li>
                 <li>
                   <span className="je-step">02</span>
@@ -298,7 +478,10 @@ export default function App() {
                 </li>
                 <li>
                   <span className="je-step">03</span>
-                  <span>Raise both arms forward to shoulder height, then lower them together.</span>
+                  <span>
+                    Raise both arms forward to shoulder height, then lower them
+                    together.
+                  </span>
                 </li>
               </ol>
 
@@ -306,7 +489,11 @@ export default function App() {
                 <div className="je-arm-tracking-list">
                   <div className="je-arm-line">
                     <span className="je-arm-name">Left Arm</span>
-                    <span className={leftArmDetected ? "je-arm-state detected" : "je-arm-state"}>
+                    <span
+                      className={
+                        leftArmDetected ? "je-arm-state detected" : "je-arm-state"
+                      }
+                    >
                       <span className="je-arm-dot" />
                       {leftArmDetected ? "Detected" : "Not detected"}
                     </span>
@@ -314,7 +501,11 @@ export default function App() {
 
                   <div className="je-arm-line">
                     <span className="je-arm-name">Right Arm</span>
-                    <span className={rightArmDetected ? "je-arm-state detected" : "je-arm-state"}>
+                    <span
+                      className={
+                        rightArmDetected ? "je-arm-state detected" : "je-arm-state"
+                      }
+                    >
                       <span className="je-arm-dot" />
                       {rightArmDetected ? "Detected" : "Not detected"}
                     </span>
@@ -324,24 +515,119 @@ export default function App() {
             </div>
 
             <div className="je-rep-area">
-              <div className="je-rep-details">
-                <div>
-                  <p className="je-rep-label">Completed Reps</p>
-                  <div className="je-rep-number" aria-live="polite" aria-atomic="true">
-                    {reps}
+              <div
+                className="je-rep-details"
+                style={{
+                  flexDirection: "column",
+                  alignItems: "stretch",
+                  gap: "0.75rem",
+                }}
+              >
+                <form
+                  onSubmit={handleNameSubmit}
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <label style={{ fontSize: "0.85rem" }}>
+                    Patient Name:{" "}
+                    <input
+                      type="text"
+                      placeholder="Enter patient name"
+                      value={nameInput}
+                      onChange={(e) => setNameInput(e.target.value)}
+                    />
+                  </label>
+                  <button type="submit" className="je-reset">
+                    Submit Name
+                  </button>
+                </form>
+
+                <p style={{ margin: 0, fontSize: "0.85rem" }}>
+                  <strong>Patient:</strong>{" "}
+                  {nameSubmitted ? patientName : "Not submitted yet"} |{" "}
+                  <strong>Session:</strong>{" "}
+                  {sessionActive ? "Active" : "Ended / Not started"}
+                </p>
+
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="je-reset"
+                    onClick={handleStartSession}
+                    disabled={sessionActive}
+                  >
+                    Start Session
+                  </button>
+
+                  <button
+                    type="button"
+                    className="je-reset"
+                    onClick={handleEndSession}
+                    disabled={!sessionActive}
+                  >
+                    End Session
+                  </button>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "0.5rem",
+                  }}
+                >
+                  <div>
+                    <p className="je-rep-label">Completed Reps</p>
+                    <div
+                      className="je-rep-number"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      {reps}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      className="je-reset"
+                      onClick={incrementReps}
+                      disabled={!sessionActive}
+                    >
+                      +1 Rep
+                    </button>
+
+                    <button
+                      type="button"
+                      className="je-reset"
+                      onClick={() => setAndSyncReps(reps - 1)}
+                      disabled={!sessionActive}
+                    >
+                      -1 Rep
+                    </button>
+
+                    <button
+                      type="button"
+                      className="je-reset"
+                      onClick={() => {
+                        counterRef.current.reset();
+                        setAndSyncReps(0);
+                      }}
+                    >
+                      Reset Counter
+                    </button>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  className="je-reset"
-                  onClick={() => {
-                    counterRef.current.reset();
-                    setReps(0);
-                  }}
-                >
-                  Reset Counter
-                </button>
+                <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.85 }}>
+                  {sessionMessage}
+                </p>
               </div>
             </div>
           </section>
@@ -355,6 +641,8 @@ export default function App() {
           </div>
         </section>
 
+        <LiveRepBoard />
+
         <div className="je-arduino-section" style={{ marginTop: "1rem" }}>
           {!connected ? (
             <button type="button" className="je-reset" onClick={handleConnect}>
@@ -362,9 +650,13 @@ export default function App() {
             </button>
           ) : (
             <div>
-              <p><strong>{arduinoStatus}</strong></p>
+              <p>
+                <strong>{arduinoStatus}</strong>
+              </p>
               <p>Live Acceleration: {acceleration.toFixed(1)}</p>
-              <p style={{ color: "#FF5555", fontWeight: "bold" }}>{speedWarning}</p>
+              <p style={{ color: "#FF5555", fontWeight: "bold" }}>
+                {speedWarning}
+              </p>
             </div>
           )}
         </div>
@@ -373,16 +665,36 @@ export default function App() {
           <summary>Advanced Measurements</summary>
           <div className="je-measurements">
             <p>
-              Left shoulder: <strong>{leftShoulderAngle === null ? "Not detected" : `${leftShoulderAngle.toFixed(0)}°`}</strong>
+              Left shoulder:{" "}
+              <strong>
+                {leftShoulderAngle === null
+                  ? "Not detected"
+                  : `${leftShoulderAngle.toFixed(0)}°`}
+              </strong>
             </p>
             <p>
-              Right shoulder: <strong>{rightShoulderAngle === null ? "Not detected" : `${rightShoulderAngle.toFixed(0)}°`}</strong>
+              Right shoulder:{" "}
+              <strong>
+                {rightShoulderAngle === null
+                  ? "Not detected"
+                  : `${rightShoulderAngle.toFixed(0)}°`}
+              </strong>
             </p>
             <p>
-              Left forward score: <strong>{leftForwardScore === null ? "Not detected" : leftForwardScore.toFixed(2)}</strong>
+              Left forward score:{" "}
+              <strong>
+                {leftForwardScore === null
+                  ? "Not detected"
+                  : leftForwardScore.toFixed(2)}
+              </strong>
             </p>
             <p>
-              Right forward score: <strong>{rightForwardScore === null ? "Not detected" : rightForwardScore.toFixed(2)}</strong>
+              Right forward score:{" "}
+              <strong>
+                {rightForwardScore === null
+                  ? "Not detected"
+                  : rightForwardScore.toFixed(2)}
+              </strong>
             </p>
           </div>
         </details>

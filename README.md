@@ -1,30 +1,14 @@
-
 # Exercise Tracker — ECE 198
 
-A webcam-based exercise tracker built with React, TypeScript, and MediaPipe. The current prototype supports Front Raises, with live arm tracking, form feedback, and automatic repetition counting.
+A webcam-based front-raise exercise tracker built with React, TypeScript, and MediaPipe, paired with a Node.js/Express and MongoDB Atlas backend for session tracking and live repetition logging.
 
-## How to Run
 
-1. Install Node.js (includes npm).
-2. Open a terminal in the project folder.
-3. Run:
+## 1. Start the Frontend (React + Vite)
 
-```bash
-npm install
-npm run dev
-```
+0. .env file has the mongodburl with anerie personal pwd
+1. npm install, npm mongodb, npm node, npm express, npm install express cors mongodb dotenv
+2. run frontend with npm run dev in main director
+3. run backend with cd node_quickstart and then node index.js
 
-4. Open the local URL displayed in the terminal (usually http://localhost:5173).
-5. Allow camera access when prompted.
-
-## How to Use
-
-1. Stand approximately 30–45° to the camera, with both arms and hips visible.
-2. Start with both arms down by your sides.
-3. Raise both arms forward to shoulder height, then lower them together.
-4. The app tracks your left and right arms, provides form feedback, and automatically counts completed repetitions.
-5. Click **Reset Counter** to start again.
-
-## Notes
-
-This is a work-in-progress prototype. Some repetitions may be missed depending on camera positioning, visibility, and movement speed.
+## backend
+- see patient data to track
