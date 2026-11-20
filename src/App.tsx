@@ -18,10 +18,11 @@ import {
 } from "./lib/exerciseGeometry";
 import { LiveRepBoard } from "./components/LiveRepBoard";
 import About from "./About";
+import Tips from "./Tips";
 
 const API_BASE_URL = "http://localhost:5001";
 
-type TabView = "EXERCISE" | "HISTORY" | "ABOUT";
+type TabView = "EXERCISE" | "HISTORY" | "ABOUT" | "TIPS";
 type Screen = "SELECT" | "WORKOUT" | "COMPLETE";
 type ExerciseKind = "front-raises" | "bicep-curls" | "lat-raises";
 
@@ -703,6 +704,7 @@ export default function App() {
             >
               Home
             </button>
+
             <button
               onClick={() => {
                 stopWebcamAndForm();
@@ -717,6 +719,7 @@ export default function App() {
             >
               Exercise!
             </button>
+
             <button
               onClick={() => {
                 stopWebcamAndForm();
@@ -730,8 +733,23 @@ export default function App() {
             >
               History
             </button>
-            <button className="px-4 py-1.5 rounded-full hover:bg-gray-100">Tips</button>
+
+            <button
+              onClick={() => {
+                stopWebcamAndForm();
+                setActiveTab("TIPS");
+              }}
+              className={`px-4 py-1.5 rounded-full transition ${
+                activeTab === "TIPS"
+                  ? "bg-[#EFEBF9] text-[#5B3BB2] font-semibold"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              Tips
+            </button>
+
             <button className="px-4 py-1.5 rounded-full hover:bg-gray-100">Q&A</button>
+
             <button
               onClick={() => {
                 stopWebcamAndForm();
@@ -771,7 +789,17 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {activeTab === "ABOUT" ? (
+        {activeTab === "TIPS" ? (
+          <div>
+            <button
+              onClick={() => setActiveTab("EXERCISE")}
+              className="text-sm text-[#6342B3] underline mb-4 inline-block"
+            >
+              ← Back to exercises
+            </button>
+            <Tips />
+          </div>
+        ) :activeTab === "ABOUT" ? (
           <div>
             <button
               onClick={() => setActiveTab("EXERCISE")}
