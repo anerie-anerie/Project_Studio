@@ -1,8 +1,6 @@
-﻿# Just Exercise — ECE 198
+﻿# Just Exercise!
 
-A webcam-based exercise tracking application built using React, TypeScript, and MediaPipe.
-
-The application automatically counts exercise repetitions by tracking body landmarks and analyzing joint movements.
+A webcam-based exercise tracker built with React, TypeScript, and MediaPipe. The application tracks body movements in real time and automatically counts exercise repetitions.
 
 ## Supported Exercises
 
@@ -10,58 +8,64 @@ The application automatically counts exercise repetitions by tracking body landm
 - Bicep Curls
 - Lateral Raises
 
-## Features
+Each exercise has its own movement detection logic to recognize completed repetitions and distinguish between different types of arm movements.
 
-- Real-time body tracking using MediaPipe
-- Automatic repetition counting for both arms
-- Movement-specific angle and direction checks
-- Live movement feedback
-- Exercise selection and rep counter reset
-- Advanced measurements for debugging
+## How It Works
 
-## Technologies
+MediaPipe detects body landmarks such as the shoulders, elbows, wrists, and hips.
 
-- React — User interface
-- TypeScript — Movement detection and repetition logic
-- MediaPipe — Body landmark tracking
-- CSS — Styling and layout
-- Vite — Development and build tooling
+Using these coordinates, the application:
+
+1. Calculates joint angles and movement directions using vector math.
+2. Checks whether the movement meets the conditions for the selected exercise.
+3. Uses a state machine to track the movement and count completed repetitions.
+
+The interface displays live body tracking, a repetition counter, and movement feedback.
+
+## Tech Stack
+
+- **React + TypeScript** — Application interface and exercise tracking logic
+- **MediaPipe** — Real-time body landmark detection
+- **CSS** — Interface styling
+- **Vite** — Development and build tooling
 
 ## Getting Started
 
-1. Install Node.js.
-2. Clone the repository and switch to the Afshal branch.
-3. Open the project folder.
-4. Run `npm install` (or `npm.cmd install` in Windows PowerShell).
-5. Run `npm run dev` (or `npm.cmd run dev`).
-6. Open the local URL displayed in the terminal.
-7. Allow webcam access.
+**Requirements:** Node.js and a working webcam.
 
-## Using the Application
+Clone the repository and switch to the exercise tracker branch:
 
-Select an exercise from the dropdown.
+```bash
+git clone -b Afshal https://github.com/anerie-anerie/Project_Studio.git
+cd Project_Studio
+```
 
-Recommended camera positions:
+Install dependencies:
 
-- Front Raises: Approximately 30 degrees to the camera
-- Bicep Curls: Front-facing or slightly angled (0–30 degrees)
-- Lateral Raises: Face the camera directly
+```bash
+npm install
+```
 
-Keep both arms visible and follow the instructions on the screen.
+Start the application:
 
-The counter recognizes completed repetitions and displays movement feedback.
+```bash
+npm run dev
+```
 
-## Integration
+Open the local URL shown in your terminal (usually `http://localhost:5173/`) and allow camera access.
 
-The application dispatches browser events for integration with other components:
+*On Windows PowerShell, use `npm.cmd` instead of `npm` if script execution is blocked.*
 
-- `justexercise:rep` — Triggered after a completed repetition. Includes the exercise, rep count, and timestamp.
-- `justexercise:exercisechange` — Triggered when the selected exercise changes.
+## Using the Tracker
 
-Exercise identifiers: `front`, `bicep`, and `lateral`.
+Select an exercise from the dropdown and position yourself so both arms are visible.
 
-## Current Limitations
+Recommended camera angles:
 
-- Some repetitions may be missed due to camera positioning or tracking interruptions.
-- Exercise results are not yet saved after refreshing the page.
-- Hardware and database integration are still in development.
+| Exercise | Camera Position |
+|---|---|
+| Front Raises | Approximately 30° |
+| Bicep Curls | Front-facing or slightly angled (0–30°) |
+| Lateral Raises | Straight on |
+
+Follow the on-screen instructions. The repetition counter updates as you complete each movement, and you can reset it at any time.
