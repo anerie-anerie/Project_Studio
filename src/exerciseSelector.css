@@ -1,0 +1,82 @@
+/* Keep the exercise heading as large as the original page title. */
+.je-exercise-header {
+  position: relative;
+}
+
+.je-exercise-trigger {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 0 3px 2px;
+  border: 0;
+  border-bottom: 2px solid #c9d0cd;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.je-exercise-trigger:hover {
+  border-bottom-color: #158a64;
+}
+
+.je-exercise-trigger:focus-visible {
+  outline: 2px solid #158a64;
+  outline-offset: 4px;
+}
+
+.je-exercise-arrow {
+  color: #73777c;
+  font-size: 0.48em;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+/* Size and spacing for the exercise menu, independent of the page heading. */
+.je-exercise-options {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% - 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(360px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid #dfe2e3;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  text-align: left;
+}
+
+.je-exercise-option {
+  display: block;
+  width: 100%;
+  padding: 12px 17px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #22232d;
+  font-family: inherit;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.je-exercise-option:hover,
+.je-exercise-option:focus-visible {
+  background: #f0f3f2;
+}
+
+.je-exercise-option.is-selected {
+  color: #136e52;
+  font-weight: 650;
+}

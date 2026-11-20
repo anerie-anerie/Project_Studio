@@ -1,30 +1,67 @@
+﻿# Just Exercise — ECE 198
 
-# Exercise Tracker — ECE 198
+A webcam-based exercise tracking application built using React, TypeScript, and MediaPipe.
 
-A webcam-based exercise tracker built with React, TypeScript, and MediaPipe. The current prototype supports Front Raises, with live arm tracking, form feedback, and automatic repetition counting.
+The application automatically counts exercise repetitions by tracking body landmarks and analyzing joint movements.
 
-## How to Run
+## Supported Exercises
 
-1. Install Node.js (includes npm).
-2. Open a terminal in the project folder.
-3. Run:
+- Front Raises
+- Bicep Curls
+- Lateral Raises
 
-```bash
-npm install
-npm run dev
-```
+## Features
 
-4. Open the local URL displayed in the terminal (usually http://localhost:5173).
-5. Allow camera access when prompted.
+- Real-time body tracking using MediaPipe
+- Automatic repetition counting for both arms
+- Movement-specific angle and direction checks
+- Live movement feedback
+- Exercise selection and rep counter reset
+- Advanced measurements for debugging
 
-## How to Use
+## Technologies
 
-1. Stand approximately 30–45° to the camera, with both arms and hips visible.
-2. Start with both arms down by your sides.
-3. Raise both arms forward to shoulder height, then lower them together.
-4. The app tracks your left and right arms, provides form feedback, and automatically counts completed repetitions.
-5. Click **Reset Counter** to start again.
+- React — User interface
+- TypeScript — Movement detection and repetition logic
+- MediaPipe — Body landmark tracking
+- CSS — Styling and layout
+- Vite — Development and build tooling
 
-## Notes
+## Getting Started
 
-This is a work-in-progress prototype. Some repetitions may be missed depending on camera positioning, visibility, and movement speed.
+1. Install Node.js.
+2. Clone the repository and switch to the Afshal branch.
+3. Open the project folder.
+4. Run `npm install` (or `npm.cmd install` in Windows PowerShell).
+5. Run `npm run dev` (or `npm.cmd run dev`).
+6. Open the local URL displayed in the terminal.
+7. Allow webcam access.
+
+## Using the Application
+
+Select an exercise from the dropdown.
+
+Recommended camera positions:
+
+- Front Raises: Approximately 30 degrees to the camera
+- Bicep Curls: Front-facing or slightly angled (0–30 degrees)
+- Lateral Raises: Face the camera directly
+
+Keep both arms visible and follow the instructions on the screen.
+
+The counter recognizes completed repetitions and displays movement feedback.
+
+## Integration
+
+The application dispatches browser events for integration with other components:
+
+- `justexercise:rep` — Triggered after a completed repetition. Includes the exercise, rep count, and timestamp.
+- `justexercise:exercisechange` — Triggered when the selected exercise changes.
+
+Exercise identifiers: `front`, `bicep`, and `lateral`.
+
+## Current Limitations
+
+- Some repetitions may be missed due to camera positioning or tracking interruptions.
+- Exercise results are not yet saved after refreshing the page.
+- Hardware and database integration are still in development.
