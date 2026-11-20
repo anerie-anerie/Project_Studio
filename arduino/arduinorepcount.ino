@@ -1,4 +1,3 @@
-
 #include "Arduino_BMI270_BMM150.h"
 // CONFIGURATION
 
@@ -87,16 +86,22 @@ float calculateAngle(
 
 void setup() {
 
+    pinMode(LED_BUILTIN, OUTPUT);   // set up the built-in light
+
     //Load the thresholds for the chosen exercise
     setExercise(exercise);
 
     Serial.begin(115200);
 
-  
-
     if (!IMU.begin()) {
         Serial.println("IMU initialization failed!");
-        while (1);
+        // Sensor failed: blink fast forever so the user knows
+        while (1) {
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(100);
+            digitalWrite(LED_BUILTIN, LOW);
+            delay(100);
+        }
     }
 
     Serial.println("Exercise Rep Tracker");
@@ -110,8 +115,9 @@ void setup() {
     float sumY = 0;
     float sumZ = 0;
 
+    
     int samplesCollected = 0;
-
+    digitalWrite(LED_BUILTIN, HIGH);   // light ON = hold still, calibrating
     while (samplesCollected < CALIBRATION_SAMPLES) {
 
         if (IMU.accelerationAvailable()) {
@@ -143,6 +149,7 @@ void setup() {
     filterInitialized = true;
 
     Serial.println("Calibration complete!");
+    digitalWrite(LED_BUILTIN, LOW);    // light OFF = ready to start
     Serial.println("Start raising your arm.");
     Serial.println();
 
@@ -197,6 +204,10 @@ void loop() {
             armRaised = false;
 
             repCount++;
+            // Blink once to show a rep was counted
+            digitalWrite(LED_BUILTIN, HIGH);
+            delay(200);
+            digitalWrite(LED_BUILTIN, LOW);
 
             Serial.print("REP COMPLETED: ");
             Serial.println(repCount);
