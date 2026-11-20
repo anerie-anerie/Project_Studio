@@ -1,4 +1,4 @@
-# Exercise Tracker — ECE 198
+# Exercise Tracker — ECE 198 (with supposed bluetooth... it dont really work that well ngl)
 
 A webcam-based front-raise exercise tracker built with React, TypeScript, and MediaPipe, paired with a Node.js/Express and MongoDB Atlas backend for session tracking and live repetition logging.
 
