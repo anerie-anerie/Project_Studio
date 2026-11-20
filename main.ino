@@ -1,64 +1,199 @@
-const int xPin = A0;
-const int yPin = A1;
-const int zPin = A2;
-const int SAMPLES = 10;
-const float RestVoltage = 1.641; // Voltage at 0 gravity (g) at 3.3V
-const float sensitivity = 0.3; // Sensitivity in V/gravity (g) (1 g = 9.81
-float zSmoothedVoltage = RestVoltage;
-float ySmoothedVoltage = RestVoltage;
-float xSmoothedVoltage = RestVoltage;
-double AlphaAcc = 0.5;
-double avgAccel = 0;
-// Supporting Functions
 
-float readAveragedVoltage(int pin, int samples) {
-  long sum = 0;
-  for (int i = 0; i < samples; i++) {
-  sum += analogRead(pin);
-  delayMicroseconds(500);
-  }
-  return (sum / (float)samples) * (3.3 / 1023.0);
+#include "Arduino_BMI270_BMM150.h"
+// CONFIGURATION
+
+// Angle required to register a raised arm
+const float RAISED_THRESHOLD = 60.0;
+
+// Angle required to return to neutral
+const float NEUTRAL_THRESHOLD = 25.0;
+
+// Smoothing factor (lower = smoother)
+const float ALPHA = 0.2;
+
+// Number of samples used for calibration
+const int CALIBRATION_SAMPLES = 100;
+
+// VARIABLES
+
+// Current accelerometer readings
+float ax = 0.0;
+float ay = 0.0;
+float az = 0.0;
+
+// Filtered acceleration
+float filteredX = 0.0;
+float filteredY = 0.0;
+float filteredZ = 0.0;
+
+// Starting (neutral) position
+float neutralX = 0.0;
+float neutralY = 0.0;
+float neutralZ = 0.0;
+
+// Movement tracking
+float movementAngle = 0.0;
+int repCount = 0;
+
+bool armRaised = false;
+bool filterInitialized = false;
+
+// CALCULATE ANGLE BETWEEN TWO VECTORS
+
+float calculateAngle(
+    float x1, float y1, float z1,
+    float x2, float y2, float z2
+) {
+
+    // Dot product
+    float dotProduct = x1*x2 + y1*y2 + z1*z2;
+
+    // Magnitudes
+    float mag1 = sqrt(x1*x1 + y1*y1 + z1*z1);
+    float mag2 = sqrt(x2*x2 + y2*y2 + z2*z2);
+
+    if (mag1 == 0 || mag2 == 0) {
+        return 0.0;
+    }
+
+    // Normalize dot product
+    float cosine = dotProduct / (mag1 * mag2);
+
+    // Prevent numerical errors
+    cosine = constrain(cosine, -1.0, 1.0);
+
+    // Convert radians to degrees
+    return acos(cosine) * 180.0 / PI;
 }
-//-----
-// smooth out measured value for plotting
-float smooth(float newVal, float prevVal, double alpha) {
-  return alpha * prevVal + (1 - alpha) * newVal;
-// return newVal;
-}
-// Main Functions ... starts with setup() then does loop()
+
+// SETUP
+
 void setup() {
-  Serial.begin(9600);
-  delay(1000);
+
+    Serial.begin(115200);
+
+    if (!IMU.begin()) {
+        Serial.println("IMU initialization failed!");
+        while (1);
+    }
+
+    Serial.println("Shoulder Raise Tracker");
+
+    // Calibrate neutral arm position
+    Serial.println("Keep your arm in the starting position...");
+
+    float sumX = 0;
+    float sumY = 0;
+    float sumZ = 0;
+
+    int samplesCollected = 0;
+
+    while (samplesCollected < CALIBRATION_SAMPLES) {
+
+        if (IMU.accelerationAvailable()) {
+
+            float x, y, z;
+
+            IMU.readAcceleration(x, y, z);
+
+            sumX += x;
+            sumY += y;
+            sumZ += z;
+
+            samplesCollected++;
+
+            delay(10);
+        }
+    }
+
+    // Calculate average starting acceleration
+    neutralX = sumX / CALIBRATION_SAMPLES;
+    neutralY = sumY / CALIBRATION_SAMPLES;
+    neutralZ = sumZ / CALIBRATION_SAMPLES;
+
+    // Initialize filter
+    filteredX = neutralX;
+    filteredY = neutralY;
+    filteredZ = neutralZ;
+
+    filterInitialized = true;
+
+    Serial.println("Calibration complete!");
+    Serial.println("Start raising your arm.");
+    Serial.println();
+
+    Serial.println("X,Y,Z,Angle,Reps");
 }
-// main functional block
+
+// MAIN LOOP
+
+
 void loop() {
 
-/*
-mobility: arm raimbows, wall angels
-squat/lunge: box squats, lunges
-push: front raises, shoulder press
-hinge: glute bridges, deadlifts
-pull: bent-over rows, hammer curls
-carry: Farmer’s carry, 
-core: leg raises, plank
-stretch: hamstring stretch, childs pose
-*/
-  float zVoltage = readAveragedVoltage(zPin, SAMPLES);
-  float accelZ = (((zVoltage - RestVoltage) / sensitivity) * 9.81);
+    if (IMU.accelerationAvailable()) {
 
-  float yVoltage = readAveragedVoltage(yPin, SAMPLES);
-  float accelY = (((yVoltage - RestVoltage) / sensitivity) * 9.81);
+        // Read raw 3D acceleration
+        IMU.readAcceleration(ax, ay, az);
 
-  float xVoltage = readAveragedVoltage(xPin, SAMPLES);
-  float accelX = (((xVoltage - RestVoltage) / sensitivity) * 9.81);
+        // Smooth sensor readings
+        if (!filterInitialized) {
 
-  // Calculate the vector magnitude minus gravity (approx 9.81 m/s^2)
-  // This ensures standing still = 0 acceleration, and moving = positive acceleration regardless of tilt
-  float totalAccel = sqrt(sq(accelX) + sq(accelY) + sq(accelZ));
-  float dynamicAccel = abs(totalAccel - 9.81); 
+            filteredX = ax;
+            filteredY = ay;
+            filteredZ = az;
 
-  // Print just the clean dynamic acceleration
-  Serial.println(dynamicAccel);
+            filterInitialized = true;
 
-  delay(50);
+        } else {
+
+            filteredX = ALPHA * ax + (1.0 - ALPHA) * filteredX;
+            filteredY = ALPHA * ay + (1.0 - ALPHA) * filteredY;
+            filteredZ = ALPHA * az + (1.0 - ALPHA) * filteredZ;
+        }
+
+        // Calculate orientation change from neutral
+        movementAngle = calculateAngle(
+            neutralX, neutralY, neutralZ,
+            filteredX, filteredY, filteredZ
+        );
+
+        // REP COUNTING
+
+        // Arm has reached the raised position
+        if (!armRaised && movementAngle >= RAISED_THRESHOLD) {
+
+            armRaised = true;
+
+            Serial.println("ARM RAISED!");
+        }
+
+        // Arm has returned to neutral position
+        else if (armRaised && movementAngle <= NEUTRAL_THRESHOLD) {
+
+            armRaised = false;
+
+            repCount++;
+
+            Serial.print("REP COMPLETED: ");
+            Serial.println(repCount);
+        }
+
+        // SERIAL OUTPUT
+
+        Serial.print(filteredX, 3);
+        Serial.print(",");
+
+        Serial.print(filteredY, 3);
+        Serial.print(",");
+
+        Serial.print(filteredZ, 3);
+        Serial.print(",");
+
+        Serial.print(movementAngle, 2);
+        Serial.print(",");
+
+        Serial.println(repCount);
+    }
+
+    delay(100);
 }
