@@ -25,7 +25,10 @@ export class TwoArmRepCounter {
   private readonly dropoutGraceMs: number;
   private readonly pairWindowMs = 3000;
 
-  constructor(private readonly kind: Kind) {
+  private readonly kind: Kind;
+
+  constructor(kind: Kind) {
+    this.kind = kind;
     this.holdMs = kind === "curl" ? 50 : kind === "front" ? 55 : 80;
     this.dropoutGraceMs = kind === "curl" ? 650 : kind === "front" ? 450 : 350;
   }
