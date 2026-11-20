@@ -17,10 +17,11 @@ import {
   isLatRaiseValid,
 } from "./lib/exerciseGeometry";
 import { LiveRepBoard } from "./components/LiveRepBoard";
+import About from "./About";
 
 const API_BASE_URL = "http://localhost:5001";
 
-type TabView = "EXERCISE" | "HISTORY";
+type TabView = "EXERCISE" | "HISTORY" | "ABOUT";
 type Screen = "SELECT" | "WORKOUT" | "COMPLETE";
 type ExerciseKind = "front-raises" | "bicep-curls" | "lat-raises";
 
@@ -704,6 +705,8 @@ export default function App() {
             </button>
             <button
               onClick={() => {
+                stopWebcamAndForm();
+                setScreen("SELECT");
                 setActiveTab("EXERCISE");
               }}
               className={`px-4 py-1.5 rounded-full transition ${
@@ -729,7 +732,19 @@ export default function App() {
             </button>
             <button className="px-4 py-1.5 rounded-full hover:bg-gray-100">Tips</button>
             <button className="px-4 py-1.5 rounded-full hover:bg-gray-100">Q&A</button>
-            <button className="px-4 py-1.5 rounded-full hover:bg-gray-100">About</button>
+            <button
+              onClick={() => {
+                stopWebcamAndForm();
+                setActiveTab("ABOUT");
+              }}
+              className={`px-4 py-1.5 rounded-full transition ${
+                activeTab === "ABOUT"
+                  ? "bg-[#EFEBF9] text-[#5B3BB2] font-semibold"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              About
+            </button>
           </nav>
         </div>
 
@@ -756,7 +771,17 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {activeTab === "HISTORY" ? (
+        {activeTab === "ABOUT" ? (
+          <div>
+            <button
+              onClick={() => setActiveTab("EXERCISE")}
+              className="text-sm text-[#6342B3] underline mb-4 inline-block"
+            >
+              ← Back to exercises
+            </button>
+            <About />
+          </div>
+        ) : activeTab === "HISTORY" ? (
           <div>
             <button
               onClick={() => setActiveTab("EXERCISE")}
@@ -799,13 +824,6 @@ export default function App() {
           <>
             {screen === "SELECT" && (
               <div>
-                <button
-                  onClick={() => setScreen("SELECT")}
-                  className="text-sm text-[#6342B3] underline mb-4 inline-block"
-                >
-                  ← Go back to home
-                </button>
-
                 <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
                   Let's start exercising!
                 </h1>
