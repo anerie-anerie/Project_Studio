@@ -68,4 +68,4 @@ Recommended camera angles:
 | Bicep Curls | Front-facing or slightly angled (0–30°) |
 | Lateral Raises | Straight on |
 
-Follow the on-screen instructions. The repetition counter updates as you complete each movement, and you can reset it at any time.
+Follow the on-screen instructions. The repetition counter updates as you complete each movement, and you can reset it at any time. Happy Exercising!
