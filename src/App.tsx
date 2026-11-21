@@ -19,10 +19,12 @@ import {
 import { LiveRepBoard } from "./components/LiveRepBoard";
 import About from "./About";
 import Tips from "./Tips";
+import QA from "./QA";
+import Home from "./Home";
 
 const API_BASE_URL = "http://localhost:5001";
 
-type TabView = "EXERCISE" | "HISTORY" | "ABOUT" | "TIPS";
+type TabView = "HOME" | "EXERCISE" | "HISTORY" | "ABOUT" | "TIPS" | "QA";
 type Screen = "SELECT" | "WORKOUT" | "COMPLETE";
 type ExerciseKind = "front-raises" | "bicep-curls" | "lat-raises";
 
@@ -697,10 +699,13 @@ export default function App() {
             <button
               onClick={() => {
                 stopWebcamAndForm();
-                setScreen("SELECT");
-                setActiveTab("EXERCISE");
+                setActiveTab("HOME");
               }}
-              className="px-4 py-1.5 rounded-full hover:bg-gray-100"
+              className={`px-4 py-1.5 rounded-full transition ${
+                activeTab === "HOME"
+                  ? "bg-[#EFEBF9] text-[#5B3BB2] font-semibold"
+                  : "hover:bg-gray-100"
+              }`}
             >
               Home
             </button>
@@ -748,7 +753,19 @@ export default function App() {
               Tips
             </button>
 
-            <button className="px-4 py-1.5 rounded-full hover:bg-gray-100">Q&A</button>
+            <button
+              onClick={() => {
+                stopWebcamAndForm();
+                setActiveTab("QA");
+              }}
+              className={`px-4 py-1.5 rounded-full transition ${
+                activeTab === "QA"
+                  ? "bg-[#EFEBF9] text-[#5B3BB2] font-semibold"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              Q&A
+            </button>
 
             <button
               onClick={() => {
@@ -789,7 +806,29 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
-        {activeTab === "TIPS" ? (
+        {activeTab === "HOME" ? (
+        <Home
+          onStartExercise={() => {
+            stopWebcamAndForm();
+            setScreen("SELECT");
+            setActiveTab("EXERCISE");
+          }}
+          onViewHistory={() => {
+            stopWebcamAndForm();
+            setActiveTab("HISTORY");
+          }}
+        />
+      ) :activeTab === "QA" ? (
+          <div>
+            <button
+              onClick={() => setActiveTab("EXERCISE")}
+              className="text-sm text-[#6342B3] underline mb-4 inline-block"
+            >
+              ← Back to exercises
+            </button>
+            <QA />
+          </div>
+        ) :activeTab === "TIPS" ? (
           <div>
             <button
               onClick={() => setActiveTab("EXERCISE")}
